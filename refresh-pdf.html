@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PDF Viewer</title>
+    <style>
+      html, body {
+        height: 100%;
+        width: 100%;
+        padding: 0px;
+        margin: 0px;
+      }
+
+      .row-container {
+        display:flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .first-row {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        padding: 1px;
+      }
+
+      .first-row > * {
+        margin: 2px;
+      }
+
+      .bar-row {
+        height: 5px;
+        background: white;
+      }
+
+      .second-row {
+        flex-grow: 1;
+      }
+
+      #chooser {
+        flex-grow: 1;
+        background: lightblue;
+        font-family: monospace;
+        font-weight: bold;
+      }
+
+      #startbut {
+        background: lightgreen;
+      }
+
+      #stopbut {
+        background: pink;
+      }
+
+      #progress-bar {
+        display: block;
+        height: 100%;
+        width: 0px;
+        background: red;
+      }
+    </style>
+    <script type="text/javascript">
+      // Constant: timer interval (milliseconds).
+      const INTERVAL = 10 * 1000;
+
+      // Set the path to display in the frame.
+      function setIframePath(path) {
+        const frameElem = document.getElementById("viewer");
+        frameElem.src = path;
+        console.log("Set iframe path: " + path);
+
+        // Also force chooser to show the same path.
+        const chooserElem = document.getElementById("chooser");
+        chooserElem.value = path;
+      }
+
+      // Refresh the page.
+      function refresh() {
+        location.reload();
+      }
+
+      // Start progress bar.
+      function startProgressBar() {
+        console.log("Start progress bar.");
+
+        const barElem = document.getElementById("progress-bar");
+        barElem.style.transition = INTERVAL + "ms linear";
+        barElem.style.width = "100%";
+      }
+
+      // Stop the progress bar.
+      function stopProgressBar() {
+        console.log("Stop progress bar.");
+
+        // Set the width to the current width...
+        const barElem = document.getElementById("progress-bar");
+        barElem.style.width = getComputedStyle(barElem).getPropertyValue("width");
+      }
+
+      // Start the timer for the next refresh.
+      function startTimer(interval) {
+        console.log("Setting timeout for " + INTERVAL + "ms.");
+        startProgressBar();
+        return setTimeout("refresh()", interval);
+      }
+
+      function stopTimer(timer) {
+        if (timer !== null) {
+          clearTimeout(timer);
+          stopProgressBar();
+          console.log("Cancel timer");
+        }
+      }
+
+      // Set the query parameters and reload.
+      function setPath() {
+        const chooserElem = document.getElementById("chooser");
+        const path = chooserElem.value;
+
+        const params = new URLSearchParams(location.search);
+        params.set("path", path);
+
+        console.log("Set path and navigate: " + path);
+        history.pushState(null, null, "?" + params.toString());
+
+        refresh();
+      }
+
+      function chooserChange() {
+        if (event.keyCode == 13) {
+          setPath();
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="row-container">
+      <div class="first-row">
+        <input id="startbut" type="button" onclick="refresh();" value="Start Refresh" />
+        <input id="stopbut" type="button" onclick="stopTimer(timer);" value="Stop Refresh" />
+        <input id="chooser" type="text" placeholder="Type full file path here followed by <Enter>" onkeydown="chooserChange();" />
+      </div>
+      <div class="bar-row">
+        <div id="progress-bar"></div>
+      </div>
+      <iframe id="viewer" class="second-row"></iframe>
+    </div>
+
+    <script type="text/javascript">
+      // Get the file path from the query string.
+      const urlParams = new URLSearchParams(location.search);
+      const path = urlParams.get('path');
+      var timer = null;
+
+      // Set the iframe path if non-null... Otherwise, stop.
+      if (path !== null) {
+        setIframePath(path);
+        timer = startTimer(INTERVAL);
+      } else {
+        console.log("No path given.");
+      }
+    </script>
+  </body>
+</html>
